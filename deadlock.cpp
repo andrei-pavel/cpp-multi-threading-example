@@ -5,6 +5,7 @@
 
 size_t const A_COUNT = 1;
 size_t const B_COUNT = 1;
+size_t const WORKLOAD = 1;
 
 std::mutex Mutex1, Mutex2;
 
@@ -13,6 +14,10 @@ void a() {
     Mutex1.lock();
     Mutex2.lock();
     std::cout << "a" << std::flush;
+    for (ssize_t i = WORKLOAD; i > 0; --i) {
+      static ssize_t a = i;
+      a = (a * 5123 + 7) / (a + 1);
+    }
     Mutex2.unlock();
     Mutex1.unlock();
   }
@@ -23,6 +28,10 @@ void b() {
     Mutex2.lock();
     Mutex1.lock();
     std::cout << "b" << std::flush;
+    for (ssize_t i = WORKLOAD; i > 0; --i) {
+      static ssize_t b = i;
+      b = (b * 5123 + 7) / (b + 1);
+    }
     Mutex1.unlock();
     Mutex2.unlock();
   }

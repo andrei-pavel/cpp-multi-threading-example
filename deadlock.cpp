@@ -3,31 +3,48 @@
 #include <thread>
 #include <vector>
 
-std::vector<uint32_t> buffer;
-std::mutex mutex;
+size_t const A_COUNT = 1;
+size_t const B_COUNT = 1;
 
-void aFunction() {
+std::mutex Mutex1, Mutex2;
+
+void a() {
   while (true) {
-    std::cout << "a" << std::endl;
-    mutex.lock();
+    Mutex1.lock();
+    Mutex2.lock();
+    std::cout << "a" << std::flush;
+    Mutex2.unlock();
+    Mutex1.unlock();
   }
 }
 
-void bFunction() {
+void b() {
   while (true) {
-    std::cout << "b" << std::endl;
-    mutex.lock();
+    Mutex2.lock();
+    Mutex1.lock();
+    std::cout << "b" << std::flush;
+    Mutex1.unlock();
+    Mutex2.unlock();
   }
 }
 
 int main() {
-  // Initialize threads.
-  std::thread a(aFunction);
-  std::thread b(bFunction);
+  std::vector<std::thread> threads;
 
-  // Wait for threads to finish.
-  a.join();
-  b.join();
+  // Launch As.
+  for (ssize_t i = A_COUNT; i > 0; --i) {
+    threads.push_back(std::thread(a));
+  }
+
+  // Launch Bs.
+  for (ssize_t i = B_COUNT; i > 0; --i) {
+    threads.push_back(std::thread(b));
+  }
+
+  // Wait for all.
+  for (size_t i = 0; i < threads.size(); ++i) {
+    threads[i].join();
+  }
 
   return EXIT_SUCCESS;
 }

@@ -3,44 +3,69 @@
 #include <thread>
 #include <vector>
 
-std::vector<uint32_t> buffer;
-std::mutex mutex;
+size_t const CONSUMER_COUNT = 1;
+size_t const PRODUCER_COUNT = 1;
 
-void consumerFunction() {
+std::vector<uint32_t> Buffer;
+std::mutex Mutex;
+int32_t ID = 0;
+int32_t LastShownID = -1;
+
+void consumer() {
+  Mutex.lock();
+  int32_t id = ID;
+  ++ID;
+  Mutex.unlock();
   while (true) {
-    mutex.lock();
-    while (true) {
-      auto item = buffer.begin();
-      if (item == buffer.end()) {
-        break;
+    Mutex.lock();
+    // while (true) {
+    auto item = Buffer.begin();
+    if (item != Buffer.end()) {
+      Buffer.erase(item);
+      if (LastShownID != id) {
+        std::cout << "Consumer " << id << std::endl;
+        LastShownID = id;
       }
-      std::cout << *item << std::endl;
-      buffer.erase(item);
     }
-    mutex.unlock();
+    // }
+    Mutex.unlock();
   }
 }
 
-void producerFunction() {
+void producer() {
+  Mutex.lock();
+  int32_t id = ID;
+  ++ID;
+  Mutex.unlock();
   while (true) {
-    mutex.lock();
+    Mutex.lock();
     static uint32_t item = 0;
-    do {
-      buffer.push_back(item++);
-    } while (item % 10 != 0);
-    mutex.unlock();
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    Buffer.push_back(item++);
+    if (LastShownID != id) {
+      std::cout << "Producer " << id << std::endl;
+      LastShownID = id;
+    }
+    Mutex.unlock();
   }
 }
 
 int main() {
-  // Initialize threads.
-  std::thread consumer(consumerFunction);
-  std::thread producer(producerFunction);
+  std::vector<std::thread> threads;
 
-  // Wait for threads to finish.
-  consumer.join();
-  producer.join();
+  // Launch consumers.
+  for (ssize_t i = CONSUMER_COUNT; i > 0; --i) {
+    threads.push_back(std::thread(consumer));
+  }
+
+  // Launch producers.
+  for (ssize_t i = PRODUCER_COUNT; i > 0; --i) {
+    threads.push_back(std::thread(producer));
+  }
+
+  // Wait for all.
+  for (size_t i = 0; i < threads.size(); ++i) {
+    threads[i].join();
+  }
 
   return EXIT_SUCCESS;
 }

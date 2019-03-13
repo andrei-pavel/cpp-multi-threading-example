@@ -25,4 +25,3 @@ enable_testing()
 add_executable(multi-threading multi-threading.cpp)
 target_link_libraries(multi-threading --coverage)
 target_link_libraries (multi-threading ${CMAKE_THREAD_LIBS_INIT})
-

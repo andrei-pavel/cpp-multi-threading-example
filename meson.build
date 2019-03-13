@@ -4,4 +4,3 @@ project('c++ starter project', 'cpp',
 
 executable('deadlock', 'deadlock.cpp')
 executable('multi-threading', 'multi-threading.cpp')
-
